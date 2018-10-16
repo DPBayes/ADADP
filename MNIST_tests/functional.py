@@ -27,6 +27,8 @@ from torch.autograd import Variable
 
 '''
 Linear layer modified for PX gradients
+
+The code is due to Mikko Heikkilä (@mixheikk)
 '''
 
 

@@ -4,7 +4,7 @@
 '''
 Expander code for clipping individual gradients.
 
-This code is due to Mikko Heikkinen (@mixheikk)
+This code is due to Mikko Heikkilä (@mixheikk)
 '''
 
 
@@ -29,14 +29,14 @@ def acc_scaled_grads(model, C, cum_grads, use_cuda=False):
   for p in filter(lambda p: p.requires_grad, model.parameters() ):
     if p.grad is not None:
       g_norm += torch.sum( p.grad.view(batch_size,-1)**2, 1)
-      
+
   g_norm = torch.sqrt(g_norm)
-  
+
   # do clipping and accumulate
   for p, key in zip( filter(lambda p: p.requires_grad, model.parameters()), cum_grads.keys() ):
     if p is not None:
       cum_grads[key] += torch.sum( (p.grad/torch.clamp(g_norm.contiguous().view(-1,1,1)/C, min=1)), dim=0 )
-      
+
 
 # add noise and replace model grads with cumulative grads
 def add_noise_with_cum_grads(model, C, sigma, cum_grads, use_cuda=False):

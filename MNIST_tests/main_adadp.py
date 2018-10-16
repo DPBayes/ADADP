@@ -14,12 +14,12 @@ Here the method is applied to the MNIST data set.
 
 The ADADP algorithm is described in
 
-Koskela, A. and Honkela, A.,  
-Learning rate adaptation for differentially private stochastic gradient descent. 
+Koskela, A. and Honkela, A.,
+Learning rate adaptation for differentially private stochastic gradient descent.
 arXiv preprint arXiv:1809.03832. (2018)
 
 This code is due to Antti Koskela (@koskeant) and is based
-on a code by Mikko Heikkinen (@mixheikk).
+on a code by Mikko Heikkilä (@mixheikk).
 
 '''
 
@@ -97,7 +97,7 @@ log_interval = 6000//batch_size # Note: this is absolute interval, actual is thi
 
 use_dp = True # dp vs non-dp model
 scale_grads = True
-grad_norm_max = 10 
+grad_norm_max = 10
 noise_sigma = args.noise_sigma
 delta = 1e-5
 
@@ -115,7 +115,7 @@ input_dim = (28,28)
 
 
 
-  
+
 if torch.cuda.is_available() and torch.cuda.device_count() > 0:
 
   print('Using cuda')
@@ -123,7 +123,7 @@ if torch.cuda.is_available() and torch.cuda.device_count() > 0:
   use_cuda = True
   data_dir = './data/'
 
-  
+
 
 trainset = torchvision.datasets.MNIST('./data', train=True, download=True,
                                       transform=transforms.Compose([
@@ -135,7 +135,7 @@ testset = torchvision.datasets.MNIST('./data', train=False, transform=transforms
   transforms.ToTensor(),
   transforms.Normalize((0.1307,), (0.3081,))]))
 
-  
+
 sampling_ratio = float(batch_size)/len(trainset)
 
 
@@ -172,10 +172,10 @@ class simpleExpandedDNN(nn.Module):
     super(simpleExpandedDNN, self).__init__()
     #self.lrelu = nn.LeakyReLU()
     self.relu = nn.ReLU()
-    
+
     self.batch_proc_size = batch_proc_size
     self.batch_size = batch_size
-      
+
     self.linears = nn.ModuleList([ linear.Linear(1*input_dim[0]*input_dim[1], latent_dim, bias=False, batch_size=batch_proc_size)])
     if n_hidden_layers > 0:
       for k in range(n_hidden_layers):
@@ -185,19 +185,19 @@ class simpleExpandedDNN(nn.Module):
                                                     shuffle=randomize_data, num_workers=4)
     self.test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                                     shuffle=randomize_data, num_workers=4)
-      
+
   def forward(self, x):
-      
+
     x = torch.unsqueeze(x.view(-1, 1*input_dim[0]*input_dim[1]),1)
 
     for k_linear in self.linears:
       x = self.relu(k_linear(x))
-    x = self.final_fc(x)   
+    x = self.final_fc(x)
     return nn.functional.log_softmax(x.view(-1,output_dim),dim=1)
 
 
 
-  
+
 model = simpleExpandedDNN(batch_size=batch_size, batch_proc_size=batch_proc_size)
 
 print('model: {}'.format(model))
@@ -206,12 +206,12 @@ print('model: {}'.format(model))
 for p in model.parameters():
   if p is not None:
     p.data.copy_( p[0].data.clone().repeat(batch_proc_size,1,1) )
-          
+
 if use_cuda:
   model = model.cuda()
 
 loss_function = nn.NLLLoss(size_average=False)
-  
+
 
 
 
@@ -225,7 +225,7 @@ optimizer = adadp.ADADP(model.parameters())
 
 
 
-  
+
 
 def train(epoch, model, T):
 
@@ -239,36 +239,36 @@ def train(epoch, model, T):
     if data.shape[0] != batch_size:
       print('skipped last batch')
       continue
-    
+
     optimizer.zero_grad()
     loss_tot = 0
 
     data, target = Variable(data, requires_grad=False), Variable(target, requires_grad=False)
     data, target = data.cuda(), target.cuda()
 
-    
+
     if use_dp and scale_grads:
       cum_grads = od()
       for i,p in enumerate(model.parameters()):
         if p.requires_grad:
           cum_grads[str(i)] = Variable(torch.zeros(p.shape[1:]),requires_grad=False).cuda()
-                  
+
     for i_batch in range(batch_size//batch_proc_size):
-      
+
       data_proc = data[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size,:]
       target_proc = target[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size]
 
       output = model(data_proc)
-            
+
       loss = loss_function(output,target_proc)
       loss_tot += loss.data
 
       loss.backward()
-            
+
       if use_dp and scale_grads:
         px_expander.acc_scaled_grads(model=model,C=grad_norm_max, cum_grads=cum_grads, use_cuda=use_cuda)
         optimizer.zero_grad()
-              
+
 
     if use_dp:
       px_expander.add_noise_with_cum_grads(model=model, C=grad_norm_max, sigma=noise_sigma, cum_grads=cum_grads, use_cuda=use_cuda)
@@ -283,15 +283,15 @@ def train(epoch, model, T):
 
     #For SGD:
     #optimizer.step()
-      
-      
+
+
     T += 1
 
     if batch_idx % log_interval == 0:
       print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
         epoch, batch_idx * len(data), len(model.train_loader.dataset),
         100. * batch_idx / len(model.train_loader), loss_tot.item()/batch_size))
-            
+
 
   return T
 
@@ -325,7 +325,7 @@ def test(model, epoch):
       target_proc = target_proc.cuda()
 
       output = model(data_proc)
-            
+
       test_loss += F.nll_loss(output, target_proc, size_average=False).item()
 
       pred = output.data.max(1, keepdim=True)[1]
@@ -371,9 +371,3 @@ for epoch in range(1,n_epochs+1):
 
 # Save the test accuracies
 np.save('accs_' +str(run_id) + '_' + str(noise_sigma) + '_' + str(batch_size),accs)
-  
-
-
-
-
-

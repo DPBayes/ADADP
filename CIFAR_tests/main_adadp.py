@@ -10,12 +10,12 @@ The parameters for the convolutive layers are loaded from a file "conv_layers.pt
 
 The ADADP algorithm is described in
 
-Koskela, A. and Honkela, A.,  
-Learning rate adaptation for differentially private stochastic gradient descent. 
+Koskela, A. and Honkela, A.,
+Learning rate adaptation for differentially private stochastic gradient descent.
 arXiv preprint arXiv:1809.03832. (2018)
 
 This code is due to Antti Koskela (@koskeant) and is based
-on a code by Mikko Heikkinen (@mixheikk).
+on a code by Mikko Heikkilä (@mixheikk).
 
 '''
 
@@ -78,15 +78,15 @@ args = parser.parse_args()
 
 
 randomize_data = True
-batch_size = args.batch_size 
+batch_size = args.batch_size
 batch_proc_size = 10 # needs to divide or => to batch size
 
 n_hidden_layers = 1 # number of hidden layers in the feedforward network
 latent_dim = 500 #width of the hidden layers
 output_dim = 10
-log_interval = 6000//batch_size 
+log_interval = 6000//batch_size
 
-use_dp = True 
+use_dp = True
 grad_norm_max = 3
 noise_sigma = args.noise_sigma
 delta = 1e-5
@@ -107,7 +107,7 @@ np.random.seed(17*run_id+3)
 
 
 
-  
+
 if torch.cuda.is_available() and torch.cuda.device_count() > 0:
 
   print('Using cuda')
@@ -115,16 +115,16 @@ if torch.cuda.is_available() and torch.cuda.device_count() > 0:
   use_cuda = True
   data_dir = './data/'
 
-  
 
 
 
 
 
 
-  
+
+
 transform = torchvision.transforms.Compose([])
-  
+
 
 transform_train = transforms.Compose([
   transforms.RandomCrop(32, padding=4),
@@ -141,13 +141,13 @@ transform_test = transforms.Compose([
 
 trainset = torchvision.datasets.CIFAR10(root=data_dir, train=True,
                                         download=True, transform=transform_train)
- 
+
 testset = torchvision.datasets.CIFAR10(root=data_dir, train=False,
                                        download=True, transform=transform_test)
 
 sampling_ratio = batch_size/len(trainset)
 
-  
+
 
 
 
@@ -186,12 +186,12 @@ class Net1(nn.Module):
     self.pool1 = nn.MaxPool2d(kernel_size=3, stride=2)
     self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0)
     self.pool2 = nn.MaxPool2d(kernel_size=3, stride=2)
-        
+
   def forward(self, x):
     x = self.pool1(F.relu(self.conv1(x)))
-    x = self.pool2(F.relu(self.conv2(x)))       
+    x = self.pool2(F.relu(self.conv2(x)))
     return x
-    
+
 model1 =  Net1().cuda()
 
 
@@ -218,10 +218,10 @@ class Net2(nn.Module):
   def __init__(self, batch_size, batch_proc_size):
     super(Net2, self).__init__()
     self.relu = nn.ReLU()
-      
+
     self.batch_proc_size = batch_proc_size
     self.batch_size = batch_size
-      
+
     self.linears = nn.ModuleList([ linear.Linear(1600, latent_dim, bias=False, batch_size=batch_proc_size)])
     if n_hidden_layers > 0:
       for k in range(n_hidden_layers):
@@ -231,12 +231,12 @@ class Net2(nn.Module):
                                                     shuffle=randomize_data, num_workers=4)
     self.test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                                     shuffle=randomize_data, num_workers=4)
-      
+
   def forward(self, x):
     x = torch.unsqueeze(x.view(-1, 1600),1)
     for k_linear in self.linears:
       x = self.relu(k_linear(x))
-    x = self.final_fc(x)   
+    x = self.final_fc(x)
     return nn.functional.log_softmax(x.view(-1,output_dim),dim=1)
 
 
@@ -246,7 +246,7 @@ model2 = Net2(batch_size=batch_size, batch_proc_size=batch_proc_size)
 for p in model2.parameters():
   if p is not None:
     p.data.copy_( p[0].data.clone().repeat(batch_proc_size,1,1) )
- 
+
 if use_cuda:
   model1 = model1.cuda()
   model2 = model2.cuda()
@@ -273,10 +273,10 @@ def train(epoch, model1, model2, T):
 
   model1.train()
   model2.train()
-          
+
   for batch_idx, (data, target) in enumerate(model2.train_loader):
 
-    if data.shape[0] != batch_size: 
+    if data.shape[0] != batch_size:
       continue
 
     optimizer.zero_grad()
@@ -289,12 +289,12 @@ def train(epoch, model1, model2, T):
     for i,p in enumerate(model2.parameters()):
       if p.requires_grad:
         cum_grads[str(i)] = Variable(torch.zeros(p.shape[1:]),requires_grad=False).cuda()
-                  
+
     for i_batch in range(batch_size//batch_proc_size):
-           
+
       data_proc = data[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size,:]
       target_proc = target[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size]
-              
+
       output1 = model1(data_proc)
       output2 = model2(output1)
 
@@ -302,7 +302,7 @@ def train(epoch, model1, model2, T):
       loss_tot += loss.data
 
       loss.backward()
-            
+
       if use_dp:
         px_expander.acc_scaled_grads(model=model2,C=grad_norm_max, cum_grads=cum_grads, use_cuda=use_cuda)
         optimizer.zero_grad()
@@ -318,7 +318,7 @@ def train(epoch, model1, model2, T):
       optimizer.step1()
     else:
       optimizer.step2(tol)
-            
+
     #optimizer.step()
 
     T += 1
@@ -327,7 +327,7 @@ def train(epoch, model1, model2, T):
       print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
         epoch, batch_idx * len(data), len(model2.train_loader.dataset),
         100. * batch_idx / len(model2.train_loader), loss_tot.item()/batch_size))
-            
+
   return T
 
 
@@ -358,9 +358,9 @@ def test(model1, model2, epoch):
       data_proc = data_proc.cuda()
       target_proc = target_proc.cuda()
 
-      output1 = model1(data_proc)                   
+      output1 = model1(data_proc)
       output2 = model2(output1)
-            
+
       test_loss += F.nll_loss(output2, target_proc, size_average=False).item()
 
       pred = output2.data.max(1, keepdim=True)[1]
@@ -403,9 +403,3 @@ for epoch in range(1,n_epochs+1):
 
 # Save the test accuracies
 np.save('accs_' +str(run_id) + '_' + str(noise_sigma) + '_' + str(batch_size),accs)
-  
-
-
-
-
-

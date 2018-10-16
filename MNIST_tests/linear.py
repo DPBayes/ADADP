@@ -4,7 +4,7 @@
 
 Linear module modified for the expander and clipping individual gradients.
 
-This code is due to Mikko Heikkinen (@mixheikk)
+This code is due to Mikko Heikkilä (@mixheikk)
 
 '''
 
@@ -50,4 +50,3 @@ class Linear(Module):
             + 'in_features=' + str(self.in_features) \
             + ', out_features=' + str(self.out_features) \
             + ', bias=' + str(self.bias is not None) + ')'
-
