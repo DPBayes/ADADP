@@ -1,3 +1,4 @@
+
 """Functional interface"""
 
 import warnings
