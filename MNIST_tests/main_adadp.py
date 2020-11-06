@@ -77,7 +77,7 @@ parser.add_argument('--n_epochs', type=int, default=10, metavar='N',
                     help='n_epochs')
 parser.add_argument('--run_id', type=int, default=1, metavar='N',
                     help='run_id')
-parser.add_argument('--tol', type=int, default=1.0, metavar='t',
+parser.add_argument('--tol', type=float, default=1.0, metavar='t',
                     help='tolerance parameter')
 
 args = parser.parse_args()
@@ -118,11 +118,13 @@ input_dim = (28,28)
 
 
 if torch.cuda.is_available() and torch.cuda.device_count() > 0:
-
   print('Using cuda')
   torch.cuda.manual_seed(11*run_id+19)
   use_cuda = True
-  data_dir = './data/'
+else:
+  use_cuda=False
+  
+data_dir = './data/'
 
 
 
@@ -245,14 +247,18 @@ def train(epoch, model, T):
     loss_tot = 0
 
     data, target = Variable(data, requires_grad=False), Variable(target, requires_grad=False)
-    data, target = data.cuda(), target.cuda()
+    if use_cuda:
+      data, target = data.cuda(), target.cuda()
 
 
     if use_dp and scale_grads:
       cum_grads = od()
       for i,p in enumerate(model.parameters()):
         if p.requires_grad:
-          cum_grads[str(i)] = Variable(torch.zeros(p.shape[1:]),requires_grad=False).cuda()
+          if use_cuda:
+            cum_grads[str(i)] = Variable(torch.zeros(p.shape[1:]),requires_grad=False).cuda()
+          else:
+            cum_grads[str(i)] = Variable(torch.zeros(p.shape[1:]),requires_grad=False)
 
     for i_batch in range(batch_size//batch_proc_size):
 
@@ -316,14 +322,16 @@ def test(model, epoch):
       continue
 
     data, target = Variable(data, requires_grad=False), Variable(target, requires_grad=False)
-    data, target = data.cuda(), target.cuda()
+    if use_cuda:
+      data, target = data.cuda(), target.cuda()
 
     for i_batch in range(model.batch_size//batch_proc_size):
 
       data_proc = data[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size,:]
       target_proc = target[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size]
-      data_proc = data_proc.cuda()
-      target_proc = target_proc.cuda()
+      if use_cuda:
+        data_proc = data_proc.cuda()
+        target_proc = target_proc.cuda()
 
       output = model(data_proc)
 
