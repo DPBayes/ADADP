@@ -57,7 +57,7 @@ import px_expander
 
 
 
- 
+print(torch.__version__) 
 
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
 parser.add_argument('--batch_size', type=int, default=200, metavar='N',
@@ -193,7 +193,8 @@ class Net1(nn.Module):
     x = self.pool2(F.relu(self.conv2(x)))
     return x
 
-model1 =  Net1().cuda()
+if use_cuda:
+  model1 =  Net1().cuda()
 
 
 
@@ -284,13 +285,17 @@ def train(epoch, model1, model2, T):
     loss_tot = 0
 
     data, target = Variable(data, requires_grad=False), Variable(target, requires_grad=False)
-    data, target = data.cuda(), target.cuda()
+    if use_cuda:
+      data, target = data.cuda(), target.cuda()
 
     cum_grads = od()
     for i,p in enumerate(model2.parameters()):
       if p.requires_grad:
-        cum_grads[str(i)] = Variable(torch.zeros(p.shape[1:]),requires_grad=False).cuda()
-
+        if use_cuda:
+          cum_grads[str(i)] = Variable(torch.zeros(p.shape[1:]),requires_grad=False).cuda()
+        else:
+          cum_grads[str(i)] = Variable(torch.zeros(p.shape[1:]),requires_grad=False)
+          
     for i_batch in range(batch_size//batch_proc_size):
 
       data_proc = data[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size,:]
@@ -350,14 +355,16 @@ def test(model1, model2, epoch):
       continue
 
     data, target = Variable(data, requires_grad=False), Variable(target, requires_grad=False)
-    data, target = data.cuda(), target.cuda()
+    if use_cuda:
+      data, target = data.cuda(), target.cuda()
 
     for i_batch in range(model2.batch_size//batch_proc_size):
 
       data_proc = data[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size,:]
       target_proc = target[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size]
-      data_proc = data_proc.cuda()
-      target_proc = target_proc.cuda()
+      if use_cuda:
+        data_proc = data_proc.cuda()
+        target_proc = target_proc.cuda()
 
       output1 = model1(data_proc)
       output2 = model2(output1)
