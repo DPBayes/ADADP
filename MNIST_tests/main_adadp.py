@@ -57,6 +57,7 @@ from torchvision import datasets, transforms
 import linear
 
 import adadp
+import adadp_cpu
 
 import gaussian_moments as gm
 
@@ -219,8 +220,11 @@ loss_function = nn.NLLLoss(size_average=False)
 
 
 #optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=l_rate, momentum=0)
-optimizer = adadp.ADADP(model.parameters())
 
+if use_cuda:
+  optimizer = adadp.ADADP(model.parameters())
+else:
+  optimizer = adadp_cpu.ADADP(model.parameters())
 
 
 
