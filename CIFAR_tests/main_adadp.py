@@ -37,7 +37,6 @@ from matplotlib import pyplot as plt
 import argparse
 
 import torch
-import torch.nn.functional as F
 from torch import nn
 from torch import optim
 from torch.autograd import Variable
@@ -58,6 +57,7 @@ import px_expander
 
 
 print(torch.__version__) 
+print(torchvision.__version__) 
 
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
 parser.add_argument('--batch_size', type=int, default=200, metavar='N',
@@ -110,14 +110,13 @@ np.random.seed(17*run_id+3)
 
 
 if torch.cuda.is_available() and torch.cuda.device_count() > 0:
-
   print('Using cuda')
   torch.cuda.manual_seed(11*run_id+19)
   use_cuda = True
-  data_dir = './data/'
+else:
+  use_cuda=False
 
-
-
+data_dir = './data/'
 
 
 
@@ -195,7 +194,8 @@ class Net1(nn.Module):
 
 if use_cuda:
   model1 =  Net1().cuda()
-
+else:
+  model1 = Net1()
 
 
 
@@ -253,6 +253,7 @@ if use_cuda:
   model1 = model1.cuda()
   model2 = model2.cuda()
 
+  
 loss_function = nn.NLLLoss(size_average=False)
 
 
@@ -362,6 +363,7 @@ def test(model1, model2, epoch):
 
       data_proc = data[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size,:]
       target_proc = target[i_batch*batch_proc_size:(i_batch+1)*batch_proc_size]
+
       if use_cuda:
         data_proc = data_proc.cuda()
         target_proc = target_proc.cuda()
