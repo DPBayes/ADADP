@@ -2,10 +2,7 @@
 
 Code for the experiments of
 
-A. Koskela and A. Honkela.
-"Learning rate adaptation for differentially private stochastic gradient descent." arXiv preprint arXiv:1809.03832 (2018).
-
-paper: https://arxiv.org/abs/1809.03832
+A. Koskela and A. Honkela. "Learning Rate Adaptation for Differentially Private Learning." In: International Conference on Artificial Intelligence and Statistics. PMLR, 2020. p. 2465-2475. http://proceedings.mlr.press/v108/koskela20a/koskela20a.pdf
 
 The current version runs only with GPU.
 
