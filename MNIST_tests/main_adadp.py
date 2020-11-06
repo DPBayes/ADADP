@@ -85,6 +85,10 @@ args = parser.parse_args()
 
 
 
+print(torch.__version__)
+print(torchvision.__version__)
+
+
 randomize_data = True
 batch_size = args.batch_size # Note: overwritten by BO if used, last batch is skipped if not full size
 batch_proc_size = 10 # needs to divide or => to batch size
@@ -124,7 +128,7 @@ if torch.cuda.is_available() and torch.cuda.device_count() > 0:
   use_cuda = True
 else:
   use_cuda=False
-  
+
 data_dir = './data/'
 
 

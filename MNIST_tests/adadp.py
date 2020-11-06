@@ -69,7 +69,7 @@ class ADADP(Optimizer):
                 p.data.add_(-0.5*self.lrs, p.grad.data)
                 err_e += (((self.p1[ijk] - p.data)**2/(torch.max(torch.ones(self.p1[ijk].size()).cuda(),self.p1[ijk]**2))).norm(1))
 
-            err_e = np.sqrt(err_e)
+            err_e = np.sqrt(float(err_e))
 
             self.lrs = float(self.lrs*min(max(np.sqrt(tol/err_e),0.9), 1.1))
 
@@ -82,6 +82,5 @@ class ADADP(Optimizer):
                self.accepted += 1
             else :
                self.failed += 1
-
 
             self.lrs_history.append(self.lrs)
