@@ -48,11 +48,10 @@ def add_noise_with_cum_grads(model, C, sigma, cum_grads, use_cuda=False):
     if p.grad is not None:
 
       # add noise to summed clipped pars
-      if batch_proc_size > 1:
-        if use_cuda:
-          p.grad = ((cum_grads[key].expand(batch_proc_size,-1,-1) + \
-          Variable( (sigma*C)*torch.normal(mean=torch.zeros_like(p.grad[0]).data, \
-          std=1.0).expand(batch_proc_size,-1,-1) ) )/model.batch_size).cuda()
-        else:
-          p.grad = (cum_grads[key].expand(batch_proc_size,-1,-1) + \
-          Variable( (sigma*C)*torch.normal(mean=torch.zeros_like(p.grad[0]).data,std=1.0).expand(batch_proc_size,-1,-1) ) )/model.batch_size
+      if use_cuda:
+        p.grad = ((cum_grads[key].expand(batch_proc_size,-1,-1) + \
+        Variable( (sigma*C)*torch.normal(mean=torch.zeros_like(p.grad[0]).data, \
+        std=1.0).expand(batch_proc_size,-1,-1) ) )/model.batch_size).cuda()
+      else:
+        p.grad = (cum_grads[key].expand(batch_proc_size,-1,-1) + \
+        Variable( (sigma*C)*torch.normal(mean=torch.zeros_like(p.grad[0]).data,std=1.0).expand(batch_proc_size,-1,-1) ) )/model.batch_size
